@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 param(
     [parameter(mandatory)]
     [string] $BIKDir
@@ -10,5 +11,5 @@ Get-ChildItem -Path $BIKDir -Filter *.bik | Foreach-Object {
 	}
 	$FileName = $WEBMRelDir + '/' + ($_.Name -replace "bik$", "webm")
 
-	ffmpeg.exe -y -i $_.FullName -codec:v libvpx-vp9 -crf 12 -b:v 0 -codec:a libvorbis $FileName
+	ffmpeg -y -i $_.FullName -codec:v libvpx-vp9 -crf 12 -b:v 0 -codec:a libvorbis $FileName
 }
