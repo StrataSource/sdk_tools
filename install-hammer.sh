@@ -5,8 +5,8 @@ set -e
 cd "$(dirname "$0")/../bin/win64" # Assume we're starting in sdk_tools!
 
 # !!! Change this hash when vcredist updates !!!
-VCRUN2019_SHA="4c6c420cf4cbf2c9c9ed476e96580ae92a97b2822c21329a2e49e8439ac5ad30"
-VCRUN2019_URL="https://aka.ms/vs/16/release/vc_redist.x86.exe"
+VCRUN2019_SHA="296f96cd102250636bcd23ab6e6cf70935337b1bbb3507fe8521d8d9cfaa932f"
+VCRUN2019_URL="https://aka.ms/vs/16/release/vc_redist.x64.exe"
 
 PROG="$0"
 
