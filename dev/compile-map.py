@@ -4,11 +4,9 @@ import argparse
 import multiprocessing
 import subprocess
 import os
-import sys
 import shutil
 import timeit
 import json
-import matplotlib.pyplot as plt
 
 argparser = argparse.ArgumentParser(description='Test harness for vrad, vvis, vbsp')
 argparser.add_argument('--profile-vrad', action='store_true')
@@ -101,20 +99,24 @@ def run_config(mapfile: str, config: str):
 		if args.vbsp2:
 			timer.begin_record('vbsp2')
 			r = subprocess.run(do_replacements(mapfile, bspfile, cfg['vbsp2']), shell=True)
+			assert r.returncode == 0
 			timer.end_record()
 		else:
 			timer.begin_record('vbsp')
 			r = subprocess.run(do_replacements(mapfile, bspfile, cfg['vbsp']), shell=True)
+			assert r.returncode == 0
 			timer.end_record()
-	if not args.skip_vrad:
-		timer.begin_record('vrad')
-		r = subprocess.run(do_replacements(mapfile, bspfile, cfg['vrad']), shell=True)
-		timer.end_record()
 	if not args.skip_vvis:
 		timer.begin_record('vvis')
 		r = subprocess.run(do_replacements(mapfile, bspfile, cfg['vvis']), shell=True)
+		assert r.returncode == 0
 		timer.end_record()
-	
+	if not args.skip_vrad:
+		timer.begin_record('vrad')
+		r = subprocess.run(do_replacements(mapfile, bspfile, cfg['vrad']), shell=True)
+		assert r.returncode == 0
+		timer.end_record()
+
 	# Copy the file into game
 	try:
 		shutil.copy(bspfile, f'{args.game}/maps/{mapname}')
