@@ -31,10 +31,10 @@ function Download-FGD {
 	rm "fgd-$GameDir.zip"
 	
 	# Nuke existing configs
-	rm -rf "hammer/cfg"
+	Remove-Item -Recurse -Force "hammer/cfg"
 	
 	Copy-Item -Path ./fgd-build/* -Destination . -Recurse -Force
-	rm -rf "fgd-build"
+	Remove-Item -Recurse -Force "fgd-build"
 }
 
 Download-FGD -GameDir p2ce
