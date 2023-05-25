@@ -49,9 +49,7 @@ function error {
 	if is-smart-term; then
 		printf '\e[91m'
 	fi
-	for a in $@; do
-		echo -e "$a"
-	done
+	echo -e "$@"
 	if [ $GUI -eq 1 ]; then
 		zenity --error --text="$@"
 	fi
@@ -62,9 +60,7 @@ function success {
 	if is-smart-term; then
 		printf '\e[92m'
 	fi
-	for a in $@; do
-		echo -e "$a"
-	done
+	echo -e "$@"
 	printf '\e[0m'
 }
 
