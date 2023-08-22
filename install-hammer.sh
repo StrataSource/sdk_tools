@@ -224,25 +224,25 @@ popd > /dev/null
 if [ $SHORTCUT -ne 0 ]; then
 
 	# Complain if we already have a shortcut...
-	P="$HOME/.local/share/applications/chaos-hammer.desktop"
+	P="$HOME/.local/share/applications/strata-hammer.desktop"
 	if [ -f "$P" ]; then
 		if [ $GUI -ne 0 ]; then
 			zenity --question --title="Overwrite Shortcut?" \
-				--text="Shortcut for Chaos Hammer already exists.\nWould you like to overwrite it?" \
+				--text="Shortcut for Strata Hammer already exists.\nWould you like to overwrite it?" \
 				--width=250
 		fi
-		warn "WARNING: Shortcut for Chaos Hammer already exists..overwriting..."
+		warn "WARNING: Shortcut for Strata Hammer already exists..overwriting..."
 	fi
 
 	# Download an icon
-	wget -nv -O "$HOME/.local/share/icons/chaos-hammer.png" "https://raw.githubusercontent.com/ChaosInitiative/Chaos-FGD/master/hammer/resource/icons/hammer128.png"
+	wget -nv -O "$HOME/.local/share/icons/strata-hammer.png" "https://raw.githubusercontent.com/StrataSource/FGD/master/hammer/resource/icons/hammer128.png"
 
 	# Finally, generate desktop entry
 	echo "[Desktop Entry]" > "$P"
-	echo "Name=Chaos Hammer" >> "$P"
-	echo "Comment=Map editing tool for Portal 2: Community Edition and other Chaos-based games" >> "$P"
+	echo "Name=Strata Hammer" >> "$P"
+	echo "Comment=Map editing tool for Portal 2: Community Edition and other Strata-based games" >> "$P"
 	echo "Exec=env WINEPREFIX=\"$WINEPREFIX\" \"$WINE\" bin/win64/hammer.exe -winecompat" >> "$P"
-	echo "Icon=chaos-hammer" >> "$P"
+	echo "Icon=strata-hammer" >> "$P"
 	echo "Terminal=false" >> "$P"
 	echo "Type=Application" >> "$P"
 	echo "Categories=Utility;Game;" >> "$P"
