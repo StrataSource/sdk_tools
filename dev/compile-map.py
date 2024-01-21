@@ -46,7 +46,7 @@ argparser.add_argument('--vbsp2', action='store_true')
 argparser.add_argument('--skip-vbsp', action='store_true')
 argparser.add_argument('--skip-vrad', action='store_true')
 argparser.add_argument('--show-graph', action='store_true')
-argparser.add_argument('--threads', default=-1, type=int, help='Number of threads to use. Defaults to half of your systems core count')
+argparser.add_argument('--threads', default=multiprocessing.cpu_count(), type=int, help='Number of threads to use. Defaults to half of your systems core count')
 argparser.add_argument('--config', nargs='+', default=['fast'], choices=list(configs.keys()), help='Configs to use/compare')
 argparser.add_argument('--game', type=str, default='p2ce', choices=['p2ce', 'momentum'], help='Games to compile for')
 argparser.add_argument('--bench', action='store_true', help='Benchmark the compilers')
@@ -54,7 +54,6 @@ argparser.add_argument('map', metavar='Map', type=str, nargs=1, help='Map to com
 args = argparser.parse_args()
 
 timers = []
-threads = multiprocessing.cpu_count()
 
 # Dead simple timer class for recording elapsed times
 class Timer:
@@ -80,13 +79,12 @@ def get_bin_directory() -> str:
 
 
 def do_replacements(sourcemappath: str, bspfile: str, cmd: str) -> str:
-	global threads
 	template = string.Template(cmd)
 	return template.substitute({
 		'game': args.game,
 		'bspfile': bspfile,
 		'file': sourcemappath,
-		'threads': str(threads),
+		'threads': str(args.threads),
 		'bin': get_bin_directory()
 	})
 
