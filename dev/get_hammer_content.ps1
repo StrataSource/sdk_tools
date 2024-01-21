@@ -20,7 +20,7 @@ function Download-FGD {
 	}
 	
 	Write-Output "Downloading fgd for $GameDir"
-	$downloadroot = "https://github.com/ChaosInitiative/Chaos-FGD/releases/latest/download/"
+	$downloadroot = "https://github.com/StrataSource/FGD/releases/latest/download/"
 	Invoke-WebRequest "$downloadroot/fgd-$GameDir.zip" -OutFile "fgd-$GameDir.zip"
 	
 	if (-not (Test-Path -Path "fgd-build")) {
