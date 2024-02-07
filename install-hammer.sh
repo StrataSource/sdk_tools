@@ -64,7 +64,7 @@ function success {
 	printf '\e[0m'
 }
 
-function check-program {
+function require-program {
 	if ! which $1 &> /dev/null; then
 		if [ $# -gt 1 ]; then
 			error $2
@@ -117,8 +117,8 @@ for a in $@; do
 done
 
 # Check for required software 
-check-program "wget"
-[ $GUI -ne 0 ] && check-program "zenity"
+require-program "wget"
+[ $GUI -ne 0 ] && require-program "zenity"
 
 # Before we do anything else, show the configuration dialog to the user, if GUI is enabled
 if [ $GUI -ne 0 ]; then
@@ -159,7 +159,7 @@ if [ $GUI -ne 0 ]; then
 fi
 
 # Check WINE in case specified in the GUI
-check-program "$WINE"
+require-program "$WINE"
 
 # Check that the WINE version is new enough...
 VERSION="$("$WINE" --version | grep -Eo "^(wine-)[0-9]")"
