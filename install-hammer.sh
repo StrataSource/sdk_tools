@@ -117,7 +117,7 @@ done
 
 # Check for required software 
 check-program "wget"
-check-program "zenity"
+[ $GUI -ne 0 ] && check-program "zenity"
 
 # Before we do anything else, show the configuration dialog to the user, if GUI is enabled
 if [ $GUI -ne 0 ]; then
@@ -249,4 +249,6 @@ if [ $SHORTCUT -ne 0 ]; then
 	echo "Path=$(realpath "$PWD"/../../)" >> "$P"
 fi
 
-zenity --width=250 --info --title="Install Finished" --text="Installation complete!\nYou may now launch hammer in WINE"
+[ $GUI -ne 0 ] && zenity --info --title="Install Finished" \
+                      --text="Installation complete!\nYou may now launch hammer in WINE" \
+                      --width=250
