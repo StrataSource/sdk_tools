@@ -17,7 +17,7 @@ FORCE=0
 GUI=1
 SHORTCUT=1
 
-function is-smart-term {
+function supports-256-colors {
 	(( $(tput colors) >= 256 ))
 }
 
@@ -35,7 +35,7 @@ function show-help {
 }
 
 function warn { 
-	if is-smart-term; then
+	if supports-256-colors; then
 		printf '\e[93m'
 	fi
 	echo -e $@
@@ -43,7 +43,7 @@ function warn {
 }
 
 function error { 
-	if is-smart-term; then
+	if supports-256-colors; then
 		printf '\e[91m'
 	fi
 	echo -e "$@"
@@ -54,7 +54,7 @@ function error {
 }
 
 function success { 
-	if is-smart-term; then
+	if supports-256-colors; then
 		printf '\e[92m'
 	fi
 	echo -e "$@"
