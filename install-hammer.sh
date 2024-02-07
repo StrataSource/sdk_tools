@@ -18,10 +18,7 @@ GUI=1
 SHORTCUT=1
 
 function is-smart-term {
-	if [ "$TERM" == "xterm-256color" ] || [ "$COLORTERM" == "truecolor" ]; then
-		return 0
-	fi
-	return 1
+	(( $(tput colors) >= 256 ))
 }
 
 function show-help {
