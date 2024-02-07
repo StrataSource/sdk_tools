@@ -250,6 +250,9 @@ if [ $SHORTCUT -ne 0 ]; then
 	echo "Path=$(realpath "$PWD"/../../)" >> "$P"
 fi
 
+echo "Install Finished"
+echo "Installation complete!"
+echo "You may now launch hammer in WINE"
 [ $GUI -ne 0 ] && zenity --info --title="Install Finished" \
                       --text="Installation complete!\nYou may now launch hammer in WINE" \
                       --width=250
