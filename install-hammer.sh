@@ -71,6 +71,7 @@ function check-program {
 		else
 			error "Could not find $1\nPlease install the corresponding package."
 		fi
+		exit 127
 	fi
 }
 
