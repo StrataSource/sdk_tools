@@ -9,21 +9,32 @@ import timeit
 import json
 import string
 import sys
+import tomllib
 
+"""
+Summary of available subs:
+ - game			- Path to game directory
+ - bspfile		- BSP file name
+ - bin			- Bin directory path
+ - file			- Source file name (i.e. maps/test.vmf)
+"""
 configs = {
 	'fast': {
+		'steps': ['vbsp', 'vvis', 'vrad'],
 		'vvis': '${bin}/vvis -game ${game} -fast ${bspfile}',
 		'vrad': '${bin}/vrad -game ${game} -noao -StaticPropLighting -threads $threads -hdr -fast ${bspfile}',
 		'vbsp': '${bin}/vbsp -game ${game} ${file}',
 		'vbsp2': '${bin}/vbsp2 -game ${game} ${file}',
 	},
 	'normal': {
+		'steps': ['vbsp', 'vvis', 'vrad'],
 		'vvis': '${bin}/vvis -game ${game} ${bspfile}',
 		'vrad': '${bin}/vrad -game ${game} -noao -textureshadows -StaticPropLighting -threads $threads -hdr ${bspfile}',
 		'vbsp': '${bin}/vbsp -game ${game} ${file}',
 		'vbsp2': '${bin}/vbsp2 -game ${game} ${file}',
 	},
 	'final': {
+		'steps': ['vbsp', 'vvis', 'vrad'],
 		'vvis': '${bin}/vvis -game ${game} ${bspfile}',
 		'vrad': '${bin}/vrad -game ${game} -noao -final -textureshadows -StaticPropLighting -threads $threads -hdr -StaticPropPolys ${bspfile}',
 		'vbsp': '${bin}/vbsp -game ${game} ${file}',
@@ -41,13 +52,9 @@ argparser.add_argument('--profile-vrad', action='store_true')
 argparser.add_argument('--profile-vbsp', action='store_true')
 argparser.add_argument('--profile-vvis', action='store_true')
 argparser.add_argument('--profiler', type=str, choices=list(profilers.keys()))
-argparser.add_argument('--skip-vvis', action='store_true')
-argparser.add_argument('--vbsp2', action='store_true')
-argparser.add_argument('--skip-vbsp', action='store_true')
-argparser.add_argument('--skip-vrad', action='store_true')
 argparser.add_argument('--show-graph', action='store_true')
 argparser.add_argument('--threads', default=multiprocessing.cpu_count(), type=int, help='Number of threads to use. Defaults to half of your systems core count')
-argparser.add_argument('--config', nargs='+', default=['fast'], choices=list(configs.keys()), help='Configs to use/compare')
+argparser.add_argument('--config', nargs='+', default=['normal'], help='Configs to use/compare')
 argparser.add_argument('--game', type=str, default='p2ce', choices=['p2ce', 'momentum'], help='Games to compile for')
 argparser.add_argument('--bench', action='store_true', help='Benchmark the compilers')
 argparser.add_argument('map', metavar='Map', type=str, nargs=1, help='Map to compile')
@@ -60,9 +67,11 @@ class Timer:
 	def __init__(self, config: str):
 		self.configname = config
 		self.times = {}
+
 	def begin_record(self, name):
 		self.curname = name
 		self.curstart = timeit.default_timer()
+
 	def end_record(self):
 		self.times[self.curname] = timeit.default_timer() - self.curstart
 
@@ -89,6 +98,21 @@ def do_replacements(sourcemappath: str, bspfile: str, cmd: str) -> str:
 	})
 
 
+# Find config by walking up the tree until we find a maps directory
+def find_config(mapname: str) -> str|None:
+	dir = os.path.dirname(os.path.abspath(mapname) if not os.path.isabs(mapname) else mapname)
+	while not os.path.exists(f'{dir}/mapconfig.toml'):
+		if os.path.exists(f'{dir}/maps') or dir == '/' or len(dir) == 0:
+			return None
+		dir = os.path.dirname(dir)
+	return f'{dir}/mapconfig.toml'
+
+
+def load_config(config: str) -> dict:
+	with open(config, 'rb') as fp:
+		return tomllib.load(fp)
+
+
 def inject_profiler():
 	p = profilers[args.profiler]
 	for k in configs.keys():
@@ -106,47 +130,25 @@ def run_config(mapfile: str, config: str, dir: str):
 	if not os.path.isabs(mapfile):
 		mapfile = os.path.abspath(os.path.join(dir, mapfile))
 	
-	cfg = configs[config]
+	# Find and load the toml, if it exists
+	cfile = load_config(find_config(mapfile))
+	if cfile is not None and config in cfile:
+		cfg = cfile[config]
+	else:
+		cfg = configs[config]
+
 	bspfile = mapfile.replace('.vmf', '.bsp')
 	isbsp = mapfile.endswith('.bsp')
 	mapname = os.path.basename(bspfile)
 	
 	timer = Timer(config)
 	
-	# Skip vbsp if we're already a bsp
-	if isbsp:
-		args.skip_vbsp = True
-	
-	if not args.skip_vbsp:
-		if args.vbsp2:
-			timer.begin_record('vbsp2')
-			r = subprocess.run(do_replacements(mapfile, bspfile, cfg['vbsp2']), shell=True)
-			assert r.returncode == 0
-			timer.end_record()
-		else:
-			timer.begin_record('vbsp')
-			r = subprocess.run(do_replacements(mapfile, bspfile, cfg['vbsp']), shell=True)
-			assert r.returncode == 0
-			timer.end_record()
-	if not args.skip_vvis:
-		timer.begin_record('vvis')
-		r = subprocess.run(do_replacements(mapfile, bspfile, cfg['vvis']), shell=True)
-		assert r.returncode == 0
-		timer.end_record()
-	if not args.skip_vrad:
-		timer.begin_record('vrad')
-		r = subprocess.run(do_replacements(mapfile, bspfile, cfg['vrad']), shell=True)
+	for step in cfg['steps']:
+		timer.begin_record(step)
+		r = subprocess.run(do_replacements(mapfile, bspfile, cfg[step]), shell=True)
 		assert r.returncode == 0
 		timer.end_record()
 
-	# Copy the file into game
-	try:
-		dest = f'{args.game}/maps/{mapname}'
-		shutil.copy(bspfile, dest)
-		print(f'Copied {bspfile} to {dest}')
-	except shutil.SameFileError:
-		pass # Eat it
-	
 	timers.append(timer)
 
 
