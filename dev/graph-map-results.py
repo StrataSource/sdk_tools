@@ -74,10 +74,8 @@ def plot_results(res: dict):
 	for k in res['results'].keys():
 		labels.append(k)
 	
-	extent = numgraphs * cringe * w + w * 4
 	xbars.set_xticks(barpos, labels)
 	xbars.legend()
-	xbars.set_xlim(-extent/2, extent/2)
 	xbars.set_title('Compile tools performance comparison')
 	fig.tight_layout()
 	plt.show()
