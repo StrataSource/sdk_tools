@@ -108,7 +108,9 @@ def find_config(mapname: str) -> str|None:
 	return f'{dir}/mapconfig.toml'
 
 
-def load_config(config: str) -> dict:
+def load_config(config: str|None) -> dict|None:
+	if config is None:
+		return None
 	with open(config, 'rb') as fp:
 		return tomllib.load(fp)
 
