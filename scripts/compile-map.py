@@ -9,11 +9,10 @@ import timeit
 import json
 import string
 import sys
-try:
+if sys.version_info >= (3,11):
 	import tomllib
-except Exception as e:
-	print('Python 3.11 or later is required to run this script!')
-	raise e
+else:
+	raise Exception('Python 3.11 or later is required to run this script!')
 
 """
 Summary of available subs:
