@@ -39,18 +39,3 @@ def get_appid_path(id: int) -> str | None:
 			am = vdf.parse(fp)['AppState']
 		return f'{lf}/steamapps/common/{am["installdir"]}'
 	return None
-
-
-def main():
-	parser = argparse.ArgumentParser()
-	parser.add_argument('-a', '--app', dest='APP', type=int, required=True, help='AppID to look for')
-	args = parser.parse_args()
-	p = get_appid_path(args.APP)
-	if p is not None:
-		print(p)
-	else:
-		exit(1)
-
-
-if __name__ == '__main__':
-	main()
