@@ -9,7 +9,11 @@ import timeit
 import json
 import string
 import sys
-import tomllib
+try:
+	import tomllib
+except Exception as e:
+	print('Python 3.11 or later is required to run this script!')
+	raise e
 
 """
 Summary of available subs:
