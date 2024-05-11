@@ -17,7 +17,7 @@ from utils.steamtools import *
 
 def main():
 	parser = argparse.ArgumentParser(usage="""
-sync-game.py -a 440000 -d bin -d p2ce
+sync-game.py -a 440000 -d bin -d p2ce -o dir_where_i_want_the_files
 
 Will copy in files from p2ce. The resulting layout will look like:
 <p2ce-dir>/bin    ->     <out-dir>/bin
