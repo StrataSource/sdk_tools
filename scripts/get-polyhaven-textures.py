@@ -13,6 +13,7 @@ parser.add_argument('-u', '--url', action='append', dest='URLS', help='URL or na
 parser.add_argument('-o', required=True, dest='PATH', help='Output path')
 parser.add_argument('-r', default='1k', dest='RES', choices=['1k', '2k', '4k', '8k', '16k'], help='Texture resolution')
 parser.add_argument('-l', dest='LIST', type=str, help='List of textures to download')
+parser.add_argument('--no-vmt', action='store_true', dest='NO_VMT', help='Dont generate VMTs')
 
 MATERIAL_TEMPLATE = '''
 PBR
@@ -40,7 +41,7 @@ def get_materials_subdir(path: str) -> str | None:
 	return None
 
 
-def get_texture(name: str, res: str, odir: str, mdir: str) -> bool:
+def get_texture(name: str, res: str, odir: str, mdir: str, do_vmt: bool) -> bool:
 	print(f'Fetching {name}...', end='', flush=True)
 	types = ['nor_dx', 'ao', 'disp', 'diff', 'rough']
 	textures = {}
@@ -66,14 +67,14 @@ def get_texture(name: str, res: str, odir: str, mdir: str) -> bool:
 		if 'disp' in textures:
 			r = subprocess.run(['vtex2', 'pack', '-n', '-q', '--normal-map', textures['nor_dx'], '--height-map', textures['disp'], '-o', f'{odir}/{name}_n.vtf'])
 		else:
-			r = subprocess.run(['vtex2', 'convert', '-q', '-f', 'rgba8888', '-o', f'{odir}/{name}_n.vtf', textures['nor_dx']])
+			r = subprocess.run(['vtex2', 'convert', '-q', '-f', 'bc7', '-o', f'{odir}/{name}_n.vtf', textures['nor_dx']])
 
 	if r.returncode != 0:
 		print('Failed to pack normal')
 		return False
 
 	# Convert diffuse
-	r = subprocess.run(['vtex2', 'convert', '-q', '-f', 'rgb888', '-o', f'{odir}/{name}_color.vtf', textures['diff']])
+	r = subprocess.run(['vtex2', 'convert', '-q', '-f', 'bc7', '-o', f'{odir}/{name}_color.vtf', textures['diff']])
 	if r.returncode != 0:
 		print('Failed to convert diffuse')
 		return False
@@ -101,16 +102,17 @@ def get_texture(name: str, res: str, odir: str, mdir: str) -> bool:
 		print('Failed to pack MRAO')
 		return False
 
-	# Generate VMT
-	vmt = string.Template(MATERIAL_TEMPLATE).substitute({
-			'mrao': f'{mdir}/{name}_mrao',
-			'disp': f'{mdir}/{name}_n.vtf',
-			'color': f'{mdir}/{name}_color.vtf',
-			'use_parallax': '1' if 'disp' in textures else '0'
-	})
+	if do_vmt:
+		# Generate VMT
+		vmt = string.Template(MATERIAL_TEMPLATE).substitute({
+				'mrao': f'{mdir}/{name}_mrao',
+				'disp': f'{mdir}/{name}_n.vtf',
+				'color': f'{mdir}/{name}_color.vtf',
+				'use_parallax': '1' if 'disp' in textures else '0'
+		})
 
-	with open(f'{odir}/{name}.vmt', 'w') as fp:
-		fp.write(vmt)
+		with open(f'{odir}/{name}.vmt', 'w') as fp:
+			fp.write(vmt)
 
 	print('Done!')
 	return True
@@ -130,7 +132,7 @@ def main():
 	mdir = get_materials_subdir(args.PATH)
 
 	r = 0
-	for u in args.URLS:
+	for u in args.URLS if args.URLS is not None else []:
 		if not get_texture(u, args.RES, args.PATH, mdir):
 			r = 1
 
@@ -140,7 +142,7 @@ def main():
 			l = json.load(fp)
 
 	for u in l:
-		if not get_texture(u, args.RES, args.PATH, mdir):
+		if not get_texture(u, args.RES, args.PATH, mdir, not args.NO_VMT):
 			r = 1
 
 	exit(r)
