@@ -13,6 +13,7 @@ parser.add_argument('-u', '--url', action='append', dest='URLS', help='URL or na
 parser.add_argument('-o', required=True, dest='PATH', help='Output path')
 parser.add_argument('-r', default='1k', dest='RES', choices=['1k', '2k', '4k', '8k', '16k'], help='Texture resolution')
 parser.add_argument('-l', dest='LIST', type=str, help='List of textures to download')
+parser.add_argument('-f', '--force', dest='FORCE', action='store_true', help='Force redownload/conversion of textures, even if they already exist')
 parser.add_argument('--no-vmt', action='store_true', dest='NO_VMT', help='Dont generate VMTs')
 
 MATERIAL_TEMPLATE = '''
@@ -41,7 +42,11 @@ def get_materials_subdir(path: str) -> str | None:
 	return None
 
 
-def get_texture(name: str, res: str, odir: str, mdir: str, do_vmt: bool) -> bool:
+def get_texture(name: str, res: str, odir: str, mdir: str, do_vmt: bool, force: bool) -> bool:
+	if os.path.exists(f'{odir}/{name}.vmt') and not force:
+		print(f'Skipping {name}, already downloaded.')
+		return True
+
 	print(f'Fetching {name}...', end='', flush=True)
 	types = ['nor_dx', 'ao', 'disp', 'diff', 'rough']
 	textures = {}
@@ -133,7 +138,7 @@ def main():
 
 	r = 0
 	for u in args.URLS if args.URLS is not None else []:
-		if not get_texture(u, args.RES, args.PATH, mdir):
+		if not get_texture(u, args.RES, args.PATH, mdir, not args.NO_VMT, args.FORCE):
 			r = 1
 
 	l = []
@@ -142,7 +147,7 @@ def main():
 			l = json.load(fp)
 
 	for u in l:
-		if not get_texture(u, args.RES, args.PATH, mdir, not args.NO_VMT):
+		if not get_texture(u, args.RES, args.PATH, mdir, not args.NO_VMT, args.FORCE):
 			r = 1
 
 	exit(r)
