@@ -58,8 +58,9 @@ argparser.add_argument('--profiler', type=str, choices=list(profilers.keys()))
 argparser.add_argument('--show-graph', action='store_true')
 argparser.add_argument('--threads', default=multiprocessing.cpu_count(), type=int, help='Number of threads to use. Defaults to half of your systems core count')
 argparser.add_argument('--config', nargs='+', default=['normal'], help='Configs to use/compare')
-argparser.add_argument('--game', type=str, default='p2ce', choices=['p2ce', 'momentum'], help='Games to compile for')
+argparser.add_argument('--game', type=str, default='p2ce', help='Games to compile for')
 argparser.add_argument('--bench', action='store_true', help='Benchmark the compilers')
+argparser.add_argument('-o', type=str, dest='OUT', help='Output BSP path')
 argparser.add_argument('map', metavar='Map', type=str, nargs=1, help='Map to compile')
 args = argparser.parse_args()
 
@@ -130,7 +131,7 @@ def inject_profiler():
 			configs[k]['vbsp2'] = p.replace('$exe', configs[k]['vbsp2'])
 
 
-def run_config(mapfile: str, config: str, dir: str):
+def run_config(mapfile: str, config: str, dir: str, output: str | None):
 	# This needs to be absolute. The engine makes some nasty assumptions about where compilers are run from
 	if not os.path.isabs(mapfile):
 		mapfile = os.path.abspath(os.path.join(dir, mapfile))
@@ -153,6 +154,12 @@ def run_config(mapfile: str, config: str, dir: str):
 		r = subprocess.run(do_replacements(mapfile, bspfile, cfg[step]), shell=True)
 		assert r.returncode == 0
 		timer.end_record()
+
+	if output is not None:
+		if not output.endswith('.bsp'):
+			output += f'/{mapname}'
+		shutil.copyfile(bspfile, output)
+		print(f'Copied {bspfile} to {output}')
 
 	timers.append(timer)
 
@@ -197,7 +204,7 @@ def main():
 	if args.profiler is not None:
 		inject_profiler()
 	for c in args.config:
-		run_config(args.map[0], c, cwd)
+		run_config(args.map[0], c, cwd, args.OUT)
 	
 	# Post build results
 	if args.bench:
