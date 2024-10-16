@@ -14,9 +14,9 @@ PROG="$0"
 [ -z "$WINEPREFIX" ] && export WINEPREFIX="$HOME/.wine"
 [ -z "$WINE" ] && WINE="wine"
 [ -z "$PREFIX" ] && export PREFIX="$HOME/.local"
-FORCE=0
-GUI=1
-SHORTCUT=1
+FORCE=false
+GUI=true
+SHORTCUT=true
 
 function supports-256-colors {
 	(( $(tput colors) >= 256 ))
@@ -49,7 +49,7 @@ function error {
 		printf '\e[91m'
 	fi
 	echo -e "$@"
-	if [ $GUI -eq 1 ]; then
+	if "$GUI"; then
 		zenity --error --text="$@"
 	fi
 	exit 1
@@ -77,7 +77,7 @@ function require-program {
 function download {
 	F="$(mktemp).exe"
 	wget -nv -O "$F" "$1"
-	if [ $FORCE -eq 0 ]; then
+	if ! "$FORCE"; then
 		SUM="$(sha256sum "$F" | grep -Eo "^[^ ]+")"
 		if [[ "$SUM" != "$2" ]]; then
 			error "Checksum validation for file $1 failed!\nExpected: $2\nActual: $SUM\n\nYou may pass --force to disable this check"
@@ -91,7 +91,7 @@ function download {
 for a in $@; do
 	case $a in 
 		--force)
-			FORCE=1
+			FORCE=true
 			;;
 		--wineprefix*)
 			export WINEPREFIX="$(echo $a | sed 's/--wineprefix//g')"
@@ -106,10 +106,10 @@ for a in $@; do
 			show-help 0
 			;;
 		--no-gui)
-			GUI=0
+			GUI=false
 			;;
 		--no-shortcut)
-			SHORTCUT=0
+			SHORTCUT=false
 			;;
 		*)
 			echo "Unknown argument $a"
@@ -120,10 +120,10 @@ done
 
 # Check for required software 
 require-program "wget"
-[ $GUI -ne 0 ] && require-program "zenity"
+"$GUI" && require-program "zenity"
 
 # Before we do anything else, show the configuration dialog to the user, if GUI is enabled
-if [ $GUI -ne 0 ]; then
+if "$GUI"; then
 	RESPONSE=$(zenity --forms \
 		--text="WINE Hammer Setup" \
 		--add-entry="WINE Prefix (Default: ~/.wine)" \
@@ -142,20 +142,20 @@ if [ $GUI -ne 0 ]; then
 	[ ! -z "${VALS[2]}" ] && export PREFIX="${VALS[2]}"
 	case "${VALS[3]}" in
 		Yes)
-			SHORTCUT=1
+			SHORTCUT=true
 			;;
 		No)
-			SHORTCUT=0
+			SHORTCUT=false
 			;;
 		*)
 			;;
 	esac
 	case "${VALS[4]}" in
 		Yes)
-			FORCE=1
+			FORCE=true
 			;;
 		No)
-			FORCE=0
+			FORCE=false
 			;;
 		*)
 			;;
@@ -168,7 +168,7 @@ require-program "$WINE"
 # Check that the WINE version is new enough...
 VERSION="$("$WINE" --version | grep -Eo "^(wine-)[0-9]")"
 if [[ "$VERSION" == "*5" ]]  || [[ "$VERSION" == "*4" ]]; then
-	if [ $FORCE -eq 0 ]; then
+	if ! "$FORCE"; then
 		error "Wine $VERSION is NOT supported! Please use WINE 6.0 or newer for Hammer\n\nYou may skip this check with --force"
 		exit 1
 	fi
@@ -177,7 +177,7 @@ fi
 echo "Using wineprefix '$WINEPREFIX' with wine '$WINE'"
 
 # Ask to create a prefix if it does not exist
-if [ ! -d "$WINEPREFIX" ] && [ $GUI -ne 0 ]; then
+if [ ! -d "$WINEPREFIX" ] && "$GUI"; then
 	zenity --question --title="WINE Prefix Does Not Exist." \
 		--text="WINE Prefix does not exist.\nWould you like to create it?" \
 		--width=250
@@ -186,7 +186,7 @@ fi
 mkdir -p "$PREFIX/share/applications"
 mkdir -p "$PREFIX/share/icons"
 
-if [ $FORCE -eq 1 ]; then
+if "$FORCE"; then
 	warn "WARNING: Force skipping hash checks"
 fi
 
@@ -206,7 +206,7 @@ function install-vcrun2019 {
 
 
 # Ask the user what to install
-if [ $GUI -ne 0 ]; then
+if "$GUI"; then
 	RESPONSE=$(zenity --list \
 		--title="Dependency Installer" \
 		--text="Select the dependencies to install" \
@@ -229,12 +229,12 @@ fi
 popd > /dev/null
 
 # Install shortcut
-if [ $SHORTCUT -ne 0 ]; then
+if "$SHORTCUT"; then
 
 	# Complain if we already have a shortcut...
 	P="$PREFIX/share/applications/strata-hammer.desktop"
 	if [ -f "$P" ]; then
-		if [ $GUI -ne 0 ]; then
+		if "$GUI"; then
 			zenity --question --title="Overwrite Shortcut?" \
 				--text="Shortcut for Strata Hammer already exists.\nWould you like to overwrite it?" \
 				--width=250
@@ -260,6 +260,6 @@ fi
 echo "Install Finished"
 echo "Installation complete!"
 echo "You may now launch hammer in WINE"
-[ $GUI -ne 0 ] && zenity --info --title="Install Finished" \
+"$GUI" && zenity --info --title="Install Finished" \
                       --text="Installation complete!\nYou may now launch hammer in WINE" \
                       --width=250
