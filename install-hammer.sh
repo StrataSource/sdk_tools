@@ -13,6 +13,7 @@ PROG="$0"
 # Defaults
 [ -z "$WINEPREFIX" ] && export WINEPREFIX="$HOME/.wine"
 [ -z "$WINE" ] && WINE="wine"
+[ -z "$PREFIX" ] && export PREFIX="$HOME/.local"
 FORCE=0
 GUI=1
 SHORTCUT=1
@@ -23,10 +24,11 @@ function supports-256-colors {
 
 function show-help {
 	echo "Script to install Hammer prerequisite software into a wineprefix"
-	echo "USAGE: $PROG [--force] [--help] [--prefix=wineprefix] [--wine=wine]"
+	echo "USAGE: $PROG [--force] [--help] [--wineprefix=wineprefix] [--wine=wine] [--prefix=prefix]"
 	echo "  --force              - Skip all validity checks. This may be necessary if a download hash changes"
-	echo "  --prefix=prefix      - Override default wineprefix"
+	echo "  --wineprefix=prefix  - Override default wineprefix"
 	echo "  --wine=wine          - Use this wine executable"
+	echo "  --prefix=prefix      - Override installation prefix"
 	echo "  --no-gui             - Disable use of Zenity for UI"
 	echo "  --no-shortcut        - Do not install shortcuts"
 	if [ $# -gt 0 ]; then
@@ -91,11 +93,14 @@ for a in $@; do
 		--force)
 			FORCE=1
 			;;
-		--prefix*)
-			export WINEPREFIX="$(echo $a | sed 's/--prefix//g')"
+		--wineprefix*)
+			export WINEPREFIX="$(echo $a | sed 's/--wineprefix//g')"
 			;;
 		--wine*)
 			WINE="$(echo $a | sed 's/--wine//g')"
+			;;
+		--prefix*)
+			export PREFIX="$(echo $a | sed 's/--prefix//g')"
 			;;
 		--help)
 			show-help 0
@@ -123,6 +128,7 @@ if [ $GUI -ne 0 ]; then
 		--text="WINE Hammer Setup" \
 		--add-entry="WINE Prefix (Default: ~/.wine)" \
 		--add-entry="WINE Path (Default: wine)" \
+		--add-entry="Install Prefix (Default: ~/.local)" \
 		--add-combo="Install .desktop shortcut? (Default: Yes)" \
 		--combo-values="Yes|No" \
 		--add-combo="Ignore errors? (--force)" \
@@ -133,7 +139,8 @@ if [ $GUI -ne 0 ]; then
 	unset IFS
 	[ ! -z "${VALS[0]}" ] && export WINEPREFIX="${VALS[0]}"
 	[ ! -z "${VALS[1]}" ] && export WINE="${VALS[1]}"
-	case "${VALS[2]}" in
+	[ ! -z "${VALS[2]}" ] && export PREFIX="${VALS[2]}"
+	case "${VALS[3]}" in
 		Yes)
 			SHORTCUT=1
 			;;
@@ -143,7 +150,7 @@ if [ $GUI -ne 0 ]; then
 		*)
 			;;
 	esac
-	case "${VALS[3]}" in
+	case "${VALS[4]}" in
 		Yes)
 			FORCE=1
 			;;
@@ -167,14 +174,17 @@ if [[ "$VERSION" == "*5" ]]  || [[ "$VERSION" == "*4" ]]; then
 	fi
 fi
 
-echo "Using prefix '$WINEPREFIX' with wine '$WINE'"
+echo "Using wineprefix '$WINEPREFIX' with wine '$WINE'"
 
 # Ask to create a prefix if it does not exist
 if [ ! -d "$WINEPREFIX" ] && [ $GUI -ne 0 ]; then
-	zenity --question --title="Prefix Does Not Exist." \
-		--text="Prefix does not exist.\nWould you like to create it?" \
+	zenity --question --title="WINE Prefix Does Not Exist." \
+		--text="WINE Prefix does not exist.\nWould you like to create it?" \
 		--width=250
 fi
+
+mkdir -p "$PREFIX/share/applications"
+mkdir -p "$PREFIX/share/icons"
 
 if [ $FORCE -eq 1 ]; then
 	warn "WARNING: Force skipping hash checks"
@@ -222,7 +232,7 @@ popd > /dev/null
 if [ $SHORTCUT -ne 0 ]; then
 
 	# Complain if we already have a shortcut...
-	P="$HOME/.local/share/applications/strata-hammer.desktop"
+	P="$PREFIX/share/applications/strata-hammer.desktop"
 	if [ -f "$P" ]; then
 		if [ $GUI -ne 0 ]; then
 			zenity --question --title="Overwrite Shortcut?" \
@@ -233,7 +243,7 @@ if [ $SHORTCUT -ne 0 ]; then
 	fi
 
 	# Download an icon
-	wget -nv -O "$HOME/.local/share/icons/strata-hammer.png" "https://raw.githubusercontent.com/StrataSource/FGD/master/hammer/resource/icons/hammer128.png"
+	wget -nv -O "$PREFIX/share/icons/strata-hammer.png" "https://raw.githubusercontent.com/StrataSource/FGD/master/hammer/resource/icons/hammer128.png"
 
 	# Finally, generate desktop entry
 	echo "[Desktop Entry]" > "$P"
