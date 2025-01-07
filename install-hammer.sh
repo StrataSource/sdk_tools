@@ -64,7 +64,7 @@ function success {
 }
 
 function require-program {
-	if ! which $1 &> /dev/null; then
+	if ! command -v $1 &> /dev/null; then
 		if [ $# -gt 1 ]; then
 			error $2
 		else
