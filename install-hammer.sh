@@ -14,6 +14,7 @@ PROG="$0"
 [ -z "$WINEPREFIX" ] && export WINEPREFIX="$HOME/.wine"
 [ -z "$WINE" ] && WINE="wine"
 [ -z "$PREFIX" ] && export PREFIX="$HOME/.local"
+[ -z "$WINETRICKS" ] && WINETRICKS="winetricks"
 FORCE=false
 GUI=true
 SHORTCUT=true
@@ -26,9 +27,9 @@ function show-help {
 	echo "Script to install Hammer prerequisite software into a wineprefix"
 	echo "USAGE: $PROG [--force] [--help] [--wineprefix=wineprefix] [--wine=wine] [--prefix=prefix]"
 	echo "  --force              - Skip all validity checks. This may be necessary if a download hash changes"
-	echo "  --wineprefix=prefix  - Override default wineprefix"
-	echo "  --wine=wine          - Use this wine executable"
-	echo "  --prefix=prefix      - Override installation prefix"
+	echo "  --prefix prefix      - Override default wineprefix"
+	echo "  --wine wine          - Use this wine executable"
+	echo "  --winetricks winetricks - Use this as the winetricks executable"
 	echo "  --no-gui             - Disable use of Zenity for UI"
 	echo "  --no-shortcut        - Do not install shortcuts"
 	if [ $# -gt 0 ]; then
@@ -79,28 +80,31 @@ function download {
 	wget -nv -O "$F" "$1"
 	if ! "$FORCE"; then
 		SUM="$(sha256sum "$F" | grep -Eo "^[^ ]+")"
-		if [[ "$SUM" != "$2" ]]; then
-			error "Checksum validation for file $1 failed!\nExpected: $2\nActual: $SUM\n\nYou may pass --force to disable this check"
-			exit 1
-		fi
 	fi
 	echo "$F"
 }
 
 # Argument parsing
-for a in $@; do
-	case $a in 
+while test $# -gt 0; do
+	case $1 in 
 		--force)
 			FORCE=true
 			;;
-		--wineprefix*)
-			export WINEPREFIX="$(echo $a | sed 's/--wineprefix//g')"
+		--wineprefix)
+			export WINEPREFIX="$2"
+			shift 2
 			;;
-		--wine*)
-			WINE="$(echo $a | sed 's/--wine//g')"
+		--prefix)
+			export PREFIX="$2"
+			shift 2
 			;;
-		--prefix*)
-			export PREFIX="$(echo $a | sed 's/--prefix//g')"
+		--wine)
+			WINE="$2"
+			shift 2
+			;;
+		--winetricks)
+			WINETRICKS="$2"
+			shift 2
 			;;
 		--help)
 			show-help 0
@@ -110,6 +114,12 @@ for a in $@; do
 			;;
 		--no-shortcut)
 			SHORTCUT=false
+			GUI=0
+			shift
+			;;
+		--no-shortcut)
+			SHORTCUT=0
+			shift
 			;;
 		*)
 			echo "Unknown argument $a"
@@ -137,7 +147,7 @@ if "$GUI"; then
 	IFS=','
 	VALS=($RESPONSE)
 	unset IFS
-	[ ! -z "${VALS[0]}" ] && export WINEPREFIX="${VALS[0]}"
+	[ ! -z "${VALS[0]}" ] && export WINEPREFIX="$(readlink -mf "$(eval echo "${VALS[0]}")")"
 	[ ! -z "${VALS[1]}" ] && export WINE="${VALS[1]}"
 	[ ! -z "${VALS[2]}" ] && export PREFIX="${VALS[2]}"
 	case "${VALS[3]}" in
@@ -204,6 +214,12 @@ function install-vcrun2019 {
 	rm -f "$FILE" || true # Eat errors here
 }
 
+function install-dxvk {
+	echo "Installing dxvk..."
+	if ! "$WINETRICKS" dlls dxvk; then
+		error "Failed to install dxvk!\nYou may need to do this manually."
+	fi
+}
 
 # Ask the user what to install
 if "$GUI"; then
@@ -215,14 +231,14 @@ if "$GUI"; then
 		--column="Component Name" \
 		--width=350 \
 		--separator="," \
-		TRUE "vcrun2019")
+		TRUE "vcrun2019"\
+		TRUE "dxvk")
 	IFS=','
 	VALS=($RESPONSE)
 	unset IFS
-	for i in "${VALS[$@]}"; do
-		if [ "$i" == "vcrun2019" ]; then
-			install-vcrun2019
-		fi
+	for i in "${VALS[@]}"; do
+		echo $i
+		install-$i
 	done
 fi
 
