@@ -11,5 +11,5 @@ Get-ChildItem -Path $BIKDir -Filter *.bik | Foreach-Object {
 	}
 	$FileName = $WEBMRelDir + '/' + ($_.Name -replace "bik$", "webm")
 
-	ffmpeg -y -i $_.FullName -codec:v libvpx-vp9 -crf 12 -b:v 0 -codec:a libvorbis $FileName
+	ffmpeg -y -i $_.FullName -codec:v libvpx-vp9 -crf 16 -b:v 0 -map 0:v -codec:a libvorbis -map 0:a $FileName
 }
