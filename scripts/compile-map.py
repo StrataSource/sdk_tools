@@ -25,21 +25,21 @@ configs = {
 	'fast': {
 		'steps': ['vbsp', 'vvis', 'vrad'],
 		'vvis': '${bin}/vvis -game ${game} -fast ${bspfile}',
-		'vrad': '${bin}/vrad -game ${game} -noao -StaticPropLighting -threads $threads -hdr -fast ${bspfile}',
+		'vrad': '${bin}/vrad -game ${game} -StaticPropLighting -threads $threads -fast ${bspfile}',
 		'vbsp': '${bin}/vbsp -game ${game} ${file}',
 		'vbsp2': '${bin}/vbsp2 -game ${game} ${file}',
 	},
 	'normal': {
 		'steps': ['vbsp', 'vvis', 'vrad'],
 		'vvis': '${bin}/vvis -game ${game} ${bspfile}',
-		'vrad': '${bin}/vrad -game ${game} -noao -textureshadows -StaticPropLighting -threads $threads -hdr ${bspfile}',
+		'vrad': '${bin}/vrad -game ${game} -textureshadows -StaticPropLighting -threads $threads ${bspfile}',
 		'vbsp': '${bin}/vbsp -game ${game} ${file}',
 		'vbsp2': '${bin}/vbsp2 -game ${game} ${file}',
 	},
 	'final': {
 		'steps': ['vbsp', 'vvis', 'vrad'],
 		'vvis': '${bin}/vvis -game ${game} ${bspfile}',
-		'vrad': '${bin}/vrad -game ${game} -noao -final -textureshadows -StaticPropLighting -threads $threads -hdr -StaticPropPolys ${bspfile}',
+		'vrad': '${bin}/vrad -game ${game} -final -textureshadows -StaticPropLighting -threads $threads -StaticPropPolys ${bspfile}',
 		'vbsp': '${bin}/vbsp -game ${game} ${file}',
 		'vbsp2': '${bin}/vbsp2 -game ${game} ${file}',
 	}
