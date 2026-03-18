@@ -26,7 +26,7 @@ with open(inputFile, "r", encoding = "utf-16") as file:
 
 # detect language of captions
 try:
-    fileLanguage = re.search(r'\s*\"([^\"]+)\"\s+\"([^\"]+)\"', lines[2]).group(2)
+    fileLanguage = re.search(r'"Language"\s+"([^"]+)', lines[2]).group(1)
     print(f"\n=== Detected caption language: {fileLanguage}")
 except Exception as e:
     print(f"=== Error detecting caption language, defaulting to 'english' ({e})")
