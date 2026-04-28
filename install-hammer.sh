@@ -265,7 +265,7 @@ if "$SHORTCUT"; then
 	echo "[Desktop Entry]" > "$P"
 	echo "Name=Strata Hammer" >> "$P"
 	echo "Comment=Map editing tool for Portal 2: Community Edition and other Strata-based games" >> "$P"
-	echo "Exec=env WINEPREFIX=\"$WINEPREFIX\" \"$WINE\" bin/win64/hammer.exe -winecompat" >> "$P"
+	echo "Exec=env WINEPREFIX=\"$WINEPREFIX\" \"$WINE\" bin/win64/hammer.exe" >> "$P"
 	echo "Icon=strata-hammer" >> "$P"
 	echo "Terminal=false" >> "$P"
 	echo "Type=Application" >> "$P"
